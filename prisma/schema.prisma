@@ -58,7 +58,7 @@ model User {
   avis      Avis[]
   favoris   Favori[]
   messages  Message[]
-  adresses  Adresse[]
+
 
   @@map("users")
 }
@@ -121,25 +121,11 @@ model Produit {
   @@map("produits")
 }
 
-model Adresse {
-  id         Int    @id @default(autoincrement())
-  userId     Int
-  libelle    String
-  ville      String
-  quartier   String
-  details    String?
-  principale Boolean @default(false)
-
-  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
-  commandes Commande[]
-
-  @@map("adresses")
-}
 
 model Commande {
   id          Int            @id @default(autoincrement())
   clientId    Int
-  adresseId   Int?
+
   statut      StatutCommande @default(RECUE)
   total       Decimal        @db.Decimal(10, 2)
   surMesure     Boolean        @default(false)
@@ -157,7 +143,7 @@ model Commande {
   updatedAt   DateTime       @updatedAt
 
   client   User              @relation("CommandeClient", fields: [clientId], references: [id])
-  adresse  Adresse?          @relation(fields: [adresseId], references: [id])
+
   artisan  Artisan?          @relation(fields: [artisanId], references: [id])
   articles ArticleCommande[]
 

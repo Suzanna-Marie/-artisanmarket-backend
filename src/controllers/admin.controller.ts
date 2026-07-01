@@ -96,7 +96,6 @@ async function supprimerUtilisateurParId(id: number, res: Response) {
     await tx.avis.deleteMany({ where: { clientId: id } })
     await tx.message.deleteMany({ where: { expediteurId: id } })
     await tx.notification.deleteMany({ where: { userId: id } })
-    await tx.adresse.deleteMany({ where: { userId: id } })
     await tx.user.delete({ where: { id } })
   })
 

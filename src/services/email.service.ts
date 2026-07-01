@@ -10,7 +10,7 @@ const brevo = axios.create({
 
 const FROM = {
   name: 'ArtisanMarket',
-  email: process.env.FROM_EMAIL || 'noreply@artisanmarket.bj',
+  email: process.env.FROM_EMAIL || 'suzannedognon436@gmail.com',
 }
 
 const envoyerEmail = async (to: string, subject: string, htmlContent: string) => {

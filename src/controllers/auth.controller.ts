@@ -9,7 +9,7 @@ import { envoyerCodeVerification, envoyerCodeReinitialisation } from '../service
 const prisma = new PrismaClient()
 
 const genererToken = (id: number, email: string, role: Role): string => {
-  const options: SignOptions = { expiresIn: '24h' }
+  const options: SignOptions = { expiresIn: '7d' }
   return jwt.sign({ id, email, role }, process.env.JWT_SECRET!, options)
 }
 
@@ -212,13 +212,14 @@ export const connexion = async (req: Request, res: Response) => {
 export const moi = async (req: AuthRequest, res: Response) => {
   try {
     const user = await prisma.user.findUnique({
-      where: { id: req.user!.id },
-      include: { artisan: true, adresses: true },
+      where: { email: req.user!.email },
+      include: { artisan: true },
     })
     if (!user) return res.status(404).json({ message: 'Utilisateur introuvable.' })
     const { password: _, ...userSansMotDePasse } = user
     return res.json(userSansMotDePasse)
   } catch (error) {
+    console.error('[moi] erreur:', error)
     return res.status(500).json({ message: 'Erreur serveur.' })
   }
 }

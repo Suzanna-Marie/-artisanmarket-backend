@@ -7,6 +7,7 @@ const router = Router()
 
 router.get('/', produitController.listerProduits)
 router.get('/categories', produitController.listerCategories)
+router.get('/avis/recents', produitController.avisRecents)
 router.get('/:id', produitController.obtenirProduit)
 
 router.post('/',
