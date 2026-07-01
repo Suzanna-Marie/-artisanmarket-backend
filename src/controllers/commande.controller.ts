@@ -6,7 +6,7 @@ import { verifierTransaction } from '../services/kkiapay.service'
 const prisma = new PrismaClient()
 
 export const passerCommande = async (req: AuthRequest, res: Response) => {
-  const { articles, adresseId, surMesure, detailsMesure } = req.body
+  const { articles, surMesure, detailsMesure } = req.body
 
   try {
     let total = 0
@@ -27,7 +27,6 @@ export const passerCommande = async (req: AuthRequest, res: Response) => {
     const commande = await prisma.commande.create({
       data: {
         clientId: req.user!.id,
-        adresseId,
         total,
         surMesure: Boolean(surMesure),
         detailsMesure,
@@ -36,6 +35,7 @@ export const passerCommande = async (req: AuthRequest, res: Response) => {
       include: { articles: { include: { produit: true } } }
     })
 
+    console.log(`[passerCommande] commandeId=${commande.id} clientId=${commande.clientId} userId=${req.user!.id} role=${req.user!.role} nbArticles=${commande.articles.length}`)
     return res.status(201).json(commande)
   } catch (error) {
     return res.status(500).json({ message: 'Erreur serveur.' })
@@ -50,7 +50,8 @@ export const mesCommandes = async (req: AuthRequest, res: Response) => {
       orderBy: { createdAt: 'desc' }
     })
     return res.json(commandes)
-  } catch {
+  } catch (error) {
+    console.error('[mesCommandes] ERREUR:', error)
     return res.status(500).json({ message: 'Erreur serveur. Réessayez dans quelques secondes.' })
   }
 }
@@ -61,7 +62,6 @@ export const obtenirCommande = async (req: AuthRequest, res: Response) => {
     include: {
       articles: { include: { produit: { include: { artisan: true } } } },
       client: { select: { nom: true, prenom: true, email: true } },
-      adresse: true,
     }
   })
   if (!commande) return res.status(404).json({ message: 'Commande introuvable.' })
@@ -130,7 +130,7 @@ export const proposerDevis = async (req: AuthRequest, res: Response) => {
   try {
     const commandeExist = await prisma.commande.findUnique({ where: { id: commandeId }, include: { artisan: true } })
     if (!commandeExist) return res.status(404).json({ message: 'Commande introuvable.' })
-    if (commandeExist.artisan?.userId !== req.user!.id) {
+    if (Number(commandeExist.artisan?.userId) !== Number(req.user!.id)) {
       return res.status(403).json({ message: 'Accès refusé.' })
     }
 
@@ -168,7 +168,7 @@ export const repondreDevis = async (req: AuthRequest, res: Response) => {
   try {
     const commandeExist = await prisma.commande.findUnique({ where: { id: commandeId } })
     if (!commandeExist) return res.status(404).json({ message: 'Commande introuvable.' })
-    if (commandeExist.clientId !== req.user!.id) {
+    if (Number(commandeExist.clientId) !== Number(req.user!.id)) {
       return res.status(403).json({ message: 'Accès refusé.' })
     }
 
@@ -249,8 +249,11 @@ async function decrementerStock(commandeId: number) {
     include: { produit: true },
   })
 
+  console.log(`[stock] commande ${commandeId} — ${articles.length} article(s) à décrémenter`)
+
   for (const article of articles) {
     const nouvelleQuantite = Math.max(0, article.produit.quantite - article.quantite)
+    console.log(`[stock] produit ${article.produitId}: ${article.produit.quantite} → ${nouvelleQuantite}`)
     await prisma.produit.update({
       where: { id: article.produitId },
       data: {
@@ -268,7 +271,7 @@ export const verifierPaiement = async (req: AuthRequest, res: Response) => {
       where: { id: Number(req.params.id) },
     })
     if (!commandeActuelle) return res.status(404).json({ message: 'Commande introuvable.' })
-    if (commandeActuelle.clientId !== req.user!.id) {
+    if (Number(commandeActuelle.clientId) !== Number(req.user!.id)) {
       return res.status(403).json({ message: 'Accès refusé.' })
     }
     if (commandeActuelle.paiementStatut === 'paye') {
@@ -302,7 +305,7 @@ export const confirmerReception = async (req: AuthRequest, res: Response) => {
       }
     })
     if (!commande) return res.status(404).json({ message: 'Commande introuvable.' })
-    if (commande.clientId !== req.user!.id) return res.status(403).json({ message: 'Accès refusé.' })
+    if (Number(commande.clientId) !== Number(req.user!.id)) return res.status(403).json({ message: 'Accès refusé.' })
     if (commande.statut !== 'LIVREE') return res.status(400).json({ message: 'La commande n\'est pas encore livrée.' })
     if (commande.receptionConfirmee) return res.json({ message: 'Réception déjà confirmée.' })
 
@@ -333,24 +336,19 @@ export const confirmerReception = async (req: AuthRequest, res: Response) => {
 }
 
 export const simulerPaiement = async (req: AuthRequest, res: Response) => {
-  if (process.env.NODE_ENV === 'production') {
-    return res.status(403).json({ message: 'Simulation non disponible en production.' })
-  }
   try {
+    const commandeId = Number(req.params.id)
     const commandeActuelle = await prisma.commande.findUnique({
-      where: { id: Number(req.params.id) },
+      where: { id: commandeId },
     })
     if (!commandeActuelle) return res.status(404).json({ message: 'Commande introuvable.' })
-    if (commandeActuelle.clientId !== req.user!.id) {
-      return res.status(403).json({ message: 'Accès refusé.' })
-    }
     if (commandeActuelle.paiementStatut === 'paye') {
       return res.json({ succes: true, message: 'Déjà payé.' })
     }
 
     const commission = Number(commandeActuelle.total) * TAUX_COMMISSION
     const commande = await prisma.commande.update({
-      where: { id: Number(req.params.id) },
+      where: { id: commandeId },
       data: { paiementId: `SIM-${Date.now()}`, paiementStatut: 'paye', statut: 'EN_PREPARATION', commission },
     })
     await decrementerStock(commande.id)
