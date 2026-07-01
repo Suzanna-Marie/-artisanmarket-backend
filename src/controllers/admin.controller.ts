@@ -386,13 +386,13 @@ export const notificationsAdmin = async (_req: AuthRequest, res: Response) => {
         where: { statut: 'PUBLIE', createdAt: { gte: il7Jours } },
         orderBy: { createdAt: 'desc' },
         take: 10,
-        select: { id: true, nom: true, createdAt: true },
+        select: { id: true, titre: true, createdAt: true },
       }),
       prisma.litige.findMany({
         where: { createdAt: { gte: il7Jours } },
         orderBy: { createdAt: 'desc' },
         take: 10,
-        select: { id: true, sujet: true, createdAt: true },
+        select: { id: true, motif: true, createdAt: true },
       }),
       prisma.artisan.findMany({
         where: { statut: 'EN_ATTENTE' },
@@ -413,7 +413,7 @@ export const notificationsAdmin = async (_req: AuthRequest, res: Response) => {
       ...nouveauxLitiges.map(l => ({
         id: `litige-${l.id}`,
         type: 'LITIGE',
-        message: `Nouveau litige : ${l.sujet}`,
+        message: `Nouveau litige : ${l.motif}`,
         date: l.createdAt,
         lien: '/dashboard/litiges',
       })),
@@ -427,7 +427,7 @@ export const notificationsAdmin = async (_req: AuthRequest, res: Response) => {
       ...nouveauxProduits.map(p => ({
         id: `produit-${p.id}`,
         type: 'PRODUIT',
-        message: `Nouveau produit publié : ${p.nom}`,
+        message: `Nouveau produit publié : ${p.titre}`,
         date: p.createdAt,
         lien: '/dashboard/produits',
       })),
