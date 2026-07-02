@@ -15,8 +15,8 @@ export const listerProduits = async (req: Request, res: Response) => {
     if (categorie) where.categorie = { slug: categorie }
     if (artisanId) where.artisanId = Number(artisanId)
     if (recherche) where.OR = [
-      { titre: { contains: String(recherche) } },
-      { description: { contains: String(recherche) } },
+      { titre: { contains: String(recherche), mode: 'insensitive' } },
+      { description: { contains: String(recherche), mode: 'insensitive' } },
     ]
     if (minPrix || maxPrix) {
       where.prix = {}
