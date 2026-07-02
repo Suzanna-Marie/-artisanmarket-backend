@@ -38,6 +38,7 @@ export const passerCommande = async (req: AuthRequest, res: Response) => {
     console.log(`[passerCommande] commandeId=${commande.id} clientId=${commande.clientId} userId=${req.user!.id} role=${req.user!.role} nbArticles=${commande.articles.length}`)
     return res.status(201).json(commande)
   } catch (error) {
+    console.error('[passerCommande] ERREUR:', error)
     return res.status(500).json({ message: 'Erreur serveur.' })
   }
 }
@@ -354,6 +355,7 @@ export const simulerPaiement = async (req: AuthRequest, res: Response) => {
     await decrementerStock(commande.id)
     return res.json({ succes: true, commande })
   } catch (error) {
+    console.error('[simulerPaiement] ERREUR:', error)
     return res.status(500).json({ message: 'Erreur lors de la simulation.' })
   }
 }
