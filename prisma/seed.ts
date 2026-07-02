@@ -23,7 +23,7 @@ async function main() {
   const categories = [
     { nom: 'Kanvô', slug: 'kanvo', icone: '🧵' },
     { nom: 'Tenues cousues', slug: 'tenues-cousues', icone: '👗' },
-    { nom: 'Tenues tricotées', slug: 'tenues-tricotees', icone: '🧶' },
+    { nom: 'Tricotage', slug: 'tenues-tricotees', icone: '🧶' },
     { nom: 'Accessoires', slug: 'accessoires', icone: '👜' },
   ]
   for (const cat of categories) {
